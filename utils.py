@@ -9,9 +9,20 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
+############################################################################################################################################
 
 def get_arena_tournaments(club='sc-weisse-dame-ev', no_tournaments = 500):
+    
+    '''
+    This Function retrieves tournament information of specific lichess team via Lichess API
+    
+    Arguments:
+        a: name of lichess team 
+        b: number maximal tournaments
+        
+    Returns:
+        The sum of the two integer arguments
+    '''
     
     website_url = 'https://lichess.org/api/team/'+ club + '/arena?max=' + str(no_tournaments)
     response = requests.get(website_url)
@@ -42,11 +53,22 @@ def get_arena_tournaments(club='sc-weisse-dame-ev', no_tournaments = 500):
         
     return df
 
-
+############################################################################################################################################
 def save_arena_tournament_json_files(df, club='sc-weisse-dame-ev'):
+    
+    '''
+    This Function retrieves player results for differnt tournaments via Lichess API
+    
+    Arguments:
+        a: df containaning id of tournaments
+        b: club name
+        
+    Returns:
+        None
+    '''
  
     # Directory
-    directory = 'json_data\\' + club 
+    directory =  os.path.join('json_data',club)
 
     try:
         os.makedirs('.\\' + directory, exist_ok = True)
@@ -60,7 +82,9 @@ def save_arena_tournament_json_files(df, club='sc-weisse-dame-ev'):
     
     for row in range (df.shape[0]):
         
-        filepath = directory + '\date_' + df.iloc[row, 0] + '_T_id_'+ df.iloc[row,-1][-8:] + '.json'
+        filepath = os.path.join('json_data',
+                                         club,
+                                        'date_' + df.iloc[row, 0] + '_T_id_'+ df.iloc[row,-1][-8:] + '.json')
             
         if not os.path.exists(filepath):
             
@@ -70,23 +94,34 @@ def save_arena_tournament_json_files(df, club='sc-weisse-dame-ev'):
             with open(filepath, 'w') as f:
                 json.dump(json_resp, f)
                 
-                
+############################################################################################################################################                
                 
 def get_player_results (df, club='sc-weisse-dame-ev'):
 
+    '''
+    This Function transfers player data from json file to dataframe
+    
+    Arguments:
+        a: df containaning id of tournaments
+        b: club name
+        
+    Returns:
+        df
+    '''
+    
     
     df['Ergebnisse_Spieler'] = ''
     df['Anzahl_Spieler'] = ''
-    
     
     # creates List with actual players and score values
     
     for row in range(df.shape[0]):
             list_players=[[],[]]
             
-            directory = 'json_data\\' + club 
-            filepath = directory + '\date_' + df.iloc[row, 0] + '_T_id_'+ df.iloc[row,-3][-8:] + '.json'
-            
+            filepath = os.path.join('json_data',
+                                     club,
+                                     'date_' + df.iloc[row, 0] + '_T_id_'+ df.iloc[row,-3][-8:] + '.json')
+
             with open(filepath) as f:
                 list_T= json.load(f)
     
@@ -100,8 +135,21 @@ def get_player_results (df, club='sc-weisse-dame-ev'):
             
     return df
 
+############################################################################################################################################
+
 
 def get_club_df(club='sc-weisse-dame-ev', no_tournaments = 500):
+    
+    '''
+    Combination of functions for more details, see description of functions.
+    
+    Arguments:
+        a: name of lichess team 
+        b: number maximal tournaments 
+        
+    Returns:
+        df
+    '''
     
     df = get_arena_tournaments(club='sc-weisse-dame-ev', no_tournaments = 500)
     
@@ -111,8 +159,20 @@ def get_club_df(club='sc-weisse-dame-ev', no_tournaments = 500):
     
     return df
 
+############################################################################################################################################
 
 def change_names(df, dict_names_replace):
+    
+    '''
+    Replaces names in case player used two accounts
+    
+    Arguments:
+        a: df
+        b: dictionary with name to be replaced and new name
+        
+    Returns:
+        df
+    '''
   
     for name in dict_names_replace:
         for row in range(df.shape[0]):
@@ -122,8 +182,21 @@ def change_names(df, dict_names_replace):
             
     return df
 
+############################################################################################################################################
 
-def teilnehmer_and_liga(df):
+def participants_and_league(df):
+    
+    '''
+    Creates a figure with number of participants and league in dependence of the tournament round.
+    
+    Arguments:
+        a: df
+        b: dictionary with name to be replaced and new name
+        
+    Returns:
+        df
+    '''
+    
     Liga_change = (df[::-1].loc[:,'Turnier'].str[-2])
     Liga_change[Liga_change == 's'] = 4
     Liga_change = Liga_change.astype(int)
@@ -134,7 +207,7 @@ def teilnehmer_and_liga(df):
     
     #plt.style.use(['science','notebook','grid'])
     
-    fig,ax = plt.subplots(1,2, figsize=(24,8))
+    fig,ax = plt.subplots(1,2, figsize=(24,7))
     
     
     #settings fontsize fs and lablepad lp
@@ -159,10 +232,22 @@ def teilnehmer_and_liga(df):
     
     plt.show()
 
-    
+
+############################################################################################################################################
     
 def score_table(df):
 
+        
+    '''
+    Extracts Score table from df
+    
+    Arguments:
+        a: df
+        
+    Returns:
+        df_score_table
+    '''
+    
     lst_players=[]
     
     for row in range(df.shape[0]):
@@ -172,14 +257,14 @@ def score_table(df):
                 lst_players.append(list_T[0][j])
                  
     set_players = set(lst_players)
-    df_Spieler = pd.DataFrame(columns= ['1.Platz','2.Platz','3.Platz','Teilnahmen','Gesamtscore'],
+    df_score_table = pd.DataFrame(columns= ['1.Platz','2.Platz','3.Platz','Teilnahmen','Gesamtscore'],
                               index=set_players)
-    df_Spieler = df_Spieler.fillna(0)
-    df_Spieler
+    df_score_table = df_score_table.fillna(0)
+ 
     
     ## determines number of participations for individual player
     for name in set_players:
-        df_Spieler.loc[name,'Teilnahmen'] = str(lst_players.count(name))
+        df_score_table.loc[name,'Teilnahmen'] = str(lst_players.count(name))
         
     for row in range(df.shape[0]):
         list_T = ast.literal_eval(df.loc[row,'Ergebnisse_Spieler'])   
@@ -190,20 +275,32 @@ def score_table(df):
                 idx_name = list_T[0].index(name)
                 
                 if idx_name < 3:
-                        df_Spieler.loc[name,df_Spieler.columns[list_T[0].index(name)]] =\
-                        df_Spieler.loc[name,df_Spieler.columns[list_T[0].index(name)]]+1
+                        df_score_table.loc[name,df_score_table.columns[list_T[0].index(name)]] =\
+                        df_score_table.loc[name,df_score_table.columns[list_T[0].index(name)]]+1
                 
             ## Zählen Gesamtscore
-                df_Spieler.loc[name,'Gesamtscore'] += list_T[1][idx_name]
+                df_score_table.loc[name,'Gesamtscore'] += list_T[1][idx_name]
        
-    df_Spieler = df_Spieler.sort_values(['Gesamtscore'], ascending=False)            
+    df_score_table = df_score_table.sort_values(['Gesamtscore'], ascending=False)            
     
-    df_Spieler_Gesamt = df_Spieler.rename(columns = {'Teilnahmen':'Teilnahmen'+'('+str(df.shape[0])+')'}) 
+    #df_score_table_Gesamt = df_score_table.rename(columns = {'Teilnahmen':'Teilnahmen'+'('+str(df.shape[0])+')'}) 
     
-    return df_Spieler
+    return df_score_table
 
-def save_pickle_score_table(df):    
 
+############################################################################################################################################
+
+def save_pickle_score_table(df):   
+    
+    '''
+    Save Score tables for differnt years
+    
+    Arguments:
+        a: df
+        
+    Returns:
+        None
+    '''
     # score table for all years
     
     score_table(df).to_pickle('score_table_all.pkl')
@@ -222,33 +319,40 @@ def save_pickle_score_table(df):
         score_table(df_masked).to_pickle('score_table_' + str(year) + '.pkl')
         
 
+############################################################################################################################################    
     
-    
-def best_players(file='score_table_all.pkl',no_players=10):
+def best_players(Zeitraum='score_table_all.pkl',Spieleranzahl=10):
 
+    '''
+    Creates figure with best players 
     
-    import pickle
+    Arguments:
+        a: df
+        
+    Returns:
+        None
+    '''
     
-    fig, ax = plt.subplots(figsize=(15,0.6*no_players))
+    fig, ax = plt.subplots(figsize=(15,0.6*Spieleranzahl))
 
-    df_Spieler = pd.read_pickle(file)  
+    df_Spieler = pd.read_pickle(Zeitraum)  
     
-    df = df_Spieler.iloc[0:no_players,:].astype(int)
+    df = df_Spieler.iloc[0:Spieleranzahl,:].astype(int)
 
 
-    splot = sns.barplot(y=df.index, x="Gesamtscore", palette="Set2", data=df, ax=ax)
+    splot = sns.barplot(y=df.index, x="Gesamtscore", palette="Set2", data=df, ax=ax);
 
     ax.get_xaxis().set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.set_title('Gesamtpunkte WeDa-Lichess Spieler' + '\n', fontsize=25)
+    ax.set_title('Bestenliste' + '\n', fontsize=25)
 
     plt.xticks(rotation = 90);
     
     max_rect = ax.patches[0].get_width()
-    print(ax.patches[-1])
+
     for rect in ax.patches :
         width = rect.get_width()
         plt.text(0.02*max_rect+rect.get_width(), rect.get_y()+0.5*rect.get_height(),
