@@ -243,7 +243,7 @@ def best_players(file='score_table_all.pkl',no_players=10):
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.set_title('Einzelergebnisse für WeDa-Lichess Spieler' + '\n', fontsize=25)
+    ax.set_title('Gesamtpunkte WeDa-Lichess Spieler' + '\n', fontsize=25)
 
     plt.xticks(rotation = 90);
     
